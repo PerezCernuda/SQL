@@ -1,0 +1,152 @@
+
+-- Creation of sport store database
+CREATE DATABASE IF NOT EXISTS trainers_home;
+USE trainers_home;
+
+-- Creation of table showing different store departments
+CREATE TABLE department
+    (dept_id INT PRIMARY KEY AUTO_INCREMENT,
+    dept_name VARCHAR(50) NOT NULL);
+
+/* Creation of table showing the different brands offered
+in the store (past and present) */   
+CREATE TABLE brand
+    (brand_id INT PRIMARY KEY AUTO_INCREMENT,
+    brand_name VARCHAR(50) NOT NULL, 
+    start_partner VARCHAR(10),
+    end_partner VARCHAR(10));
+
+-- Creation of table showing items in the store    
+CREATE TABLE equipment
+	  (item_id INT PRIMARY KEY AUTO_INCREMENT,  
+	  item_name VARCHAR(50) NOT NULL,  
+	  dept_id INT,  
+    brand_id INT, 
+    item_price DEC(10,2),
+    FOREIGN KEY (dept_id) REFERENCES department(dept_id),
+    FOREIGN KEY (brand_id) REFERENCES brand(brand_id));
+/* Price information for this table should go in its own table
+   to keep price history for data analysis but for the sake of
+   this portfolio project we'll keep it simple. */
+ 
+-- Inserting departments to table
+INSERT INTO department (dept_name)
+VALUES
+	("Running"),
+    ("Bikes & Cycling"),
+    ("Yoga"),
+    ("Exercise & Fitness"),
+    ("Hike & Camp");
+    
+    
+-- Inserting brands into table    
+INSERT INTO brand (brand_name, start_partner, end_partner)
+VALUES
+	  ("Merida", "2010-09-03", "9999-99-99"),
+    ("BMC", "2013-05-24", "9999-99-99"),
+    ("The North Face", "2000-08-15", "2020-08-07"),
+    ("Patagonia", "2004-06-30", "9999-99-99"),
+    ("Lululemon", "2017-03-25", "9999-99-99"),
+    ("Garmin", "1988-02-06", "9999-99-99"),
+    ("Rogue", "2014-07-19", "9999-99-99"),
+    ("Reebok", "1996-05-18", "9999-99-99"), 
+    ("Nike", "2018-09-13", "9999-99-99"), 
+    ("Gymshark", "2008-04-04", "9999-99-99");
+
+-- Inserting store items into table    
+INSERT INTO equipment (item_name, dept_id, brand_id, item_price)
+VALUES
+  	("Trail shoes", 1, 8, 92.85),
+    ("Compression socks", 1, 5, 16.75),
+    ("Wind breaker", 1, 5, 22.30),
+    ("Watch", 1, 6, 399.95),
+    ("Backpack water bottle", 1, 9, 28.54),
+    ("Headband", 1, 9, 9.99),
+    ("Body reflector", 1, 4, 4.32),
+    ("Energy gel", 1, 10, 1.50),
+    ("Helmet", 2, 1, 58.26),
+    ("Pedals", 2, 2, 23.65),
+    ("Offroad tires", 2, 2, 76.43),
+    ("Chain lube", 2, 1, 13.86),
+    ("Helmet light", 2, 1, 11.98),
+    ("Cyclingpads", 2, 2, 67.84),
+    ("Seat cushion", 2, 1, 34.67),
+    ("Handlebar basket", 2, 2, 5.74),
+    ("Yoga mat", 3, 9, 35.43),
+    ("Yoga block", 3, 9, 24.74),
+    ("Yoga strap", 3, 8, 10.33),
+    ("Leggings", 3, 5, 46.37),
+    ("Yoga Wheel", 3, 8, 39.43),
+    ("Inversion Yoga Stool", 3, 10, 46.75),
+    ("Kettlebell", 4, 7,82.95),
+    ("Dumbbell", 4, 9, 68.00),
+    ("Resistance bands", 4, 8, 14.70),
+    ("Slam ball", 4, 7, 28.56),
+    ("Wall ball", 4, 7, 23.56),
+    ("Ab mat", 4, 8, 8.45),
+    ("Foam roller", 4, 5, 13.55),
+    ("Gliding discs", 4, 10, 4.65),
+    ("Abdominal Wheel", 4, 9, 12.47),
+    ("Step bench", 4, 7, 24.56),
+    ("Jump rope", 4, 7, 7.42),
+    ("Sleeping bag", 5, 3, 39.56),
+    ("Tent", 5, 3, 53.60),
+    ("Headlamp", 5, 4, 19.45),
+    ("Cooler", 5, 4, 49.43),
+    ("Binoculars", 5, 4, 167.32),
+    ("Camping chair", 5, 3, 16.63),
+    ("Camping gas", 5, 3, 5.00);
+    
+
+/* Bringing all results together to show each department in the store, the total number of items for
+that department, the average cost of items for that department, the lowest priced item in that department 
+and its cost, and the highest priced item in that department and its cost. */
+SELECT d.dept_name AS "Department", COUNT(e.item_id) AS "Total Items", ROUND(AVG(e.item_price),2) AS "Average Item Cost",
+       eMin.item_name AS "Item w/ Lowest Cost", MIN(e.item_price) AS "Price of Lowest Cost Item",
+       eMax.item_name "Item w/ Highest Cost", MAX(e.item_price) AS "Price of Highest Cost Item"
+FROM equipment e
+INNER JOIN department d ON e.dept_id = d.dept_id
+INNER JOIN brand b ON e.brand_id = b.brand_id
+LEFT JOIN
+	  -- Finding the lowest priced item for each department
+    (SELECT e.dept_id, e.item_name
+    FROM equipment e
+	  INNER JOIN 
+		    (SELECT dept_id, MIN(item_price) AS min_item_price
+		    FROM equipment
+		    GROUP BY dept_id
+		    HAVING MIN(item_price)) AS min 
+		ON e.dept_id = min.dept_id AND e.item_price = min.min_item_price) AS eMin
+ON e.dept_id = eMin.dept_id
+LEFT JOIN
+	  -- Finding the highest prices item for each department
+    (SELECT e.dept_id, e.item_name
+    FROM equipment e
+  	INNER JOIN 
+		    (SELECT dept_id, MAX(item_price) AS max_item_price
+		    FROM equipment
+		    GROUP BY dept_id
+		    HAVING MAX(item_price)) AS max 
+		ON e.dept_id = max.dept_id AND e.item_price = max.max_item_price) AS eMax
+ON e.dept_id = eMax.dept_id
+GROUP BY d.dept_name, eMin.item_name, eMax.item_name
+ORDER BY COUNT(e.item_id) DESC;
+
+
+/* Creating a purchase table will allow us to not only see details about inventory
+but also get important statistics that are useful for ordering and managing invetory 
+along with designing marketing tactics. */
+
+
+
+    
+    
+    
+            
+            
+    
+
+	
+
+
+
