@@ -118,3 +118,4 @@ FROM astronauts a
 WHERE (ABS(a.Year - RIGHT(a.Birth_Date,4)) IS NOT NULL) AND 
       (ABS(a.Year - RIGHT(a.Birth_Date,4)) NOT BETWEEN 26 AND 45)
 ORDER BY a.GroupNum;
+
