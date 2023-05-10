@@ -26,13 +26,13 @@ CREATE TABLE equipment
     FOREIGN KEY (dept_id) REFERENCES department(dept_id),
     FOREIGN KEY (brand_id) REFERENCES brand(brand_id));
 /* Price information for this table should go in its own table
-   to keep price history for data analysis but for the sake of
-   this portfolio project we'll keep it simple. */
+to keep price history for data analysis but for the sake of
+this portfolio project we'll keep it simple. */
  
 -- Inserting departments to table
 INSERT INTO department (dept_name)
 VALUES
-	("Running"),
+    ("Running"),
     ("Bikes & Cycling"),
     ("Yoga"),
     ("Exercise & Fitness"),
@@ -42,7 +42,7 @@ VALUES
 -- Inserting brands into table    
 INSERT INTO brand (brand_name, start_partner, end_partner)
 VALUES
-	  ("Merida", "2010-09-03", "9999-99-99"),
+    ("Merida", "2010-09-03", "9999-99-99"),
     ("BMC", "2013-05-24", "9999-99-99"),
     ("The North Face", "2000-08-15", "2020-08-07"),
     ("Patagonia", "2004-06-30", "9999-99-99"),
@@ -56,7 +56,7 @@ VALUES
 -- Inserting store items into table    
 INSERT INTO equipment (item_name, dept_id, brand_id, item_price)
 VALUES
-  	("Trail shoes", 1, 8, 92.85),
+    ("Trail shoes", 1, 8, 92.85),
     ("Compression socks", 1, 5, 16.75),
     ("Wind breaker", 1, 5, 22.30),
     ("Watch", 1, 6, 399.95),
@@ -108,25 +108,25 @@ FROM equipment e
 INNER JOIN department d ON e.dept_id = d.dept_id
 INNER JOIN brand b ON e.brand_id = b.brand_id
 LEFT JOIN
-	  -- Finding the lowest priced item for each department
-    (SELECT e.dept_id, e.item_name
-    FROM equipment e
-	  INNER JOIN 
-		    (SELECT dept_id, MIN(item_price) AS min_item_price
-		    FROM equipment
-		    GROUP BY dept_id
-		    HAVING MIN(item_price)) AS min 
+	-- Finding the lowest priced item for each department
+   	(SELECT e.dept_id, e.item_name
+    	FROM equipment e
+	INNER JOIN 
+		(SELECT dept_id, MIN(item_price) AS min_item_price
+		FROM equipment
+		GROUP BY dept_id
+		HAVING MIN(item_price)) AS min 
 		ON e.dept_id = min.dept_id AND e.item_price = min.min_item_price) AS eMin
 ON e.dept_id = eMin.dept_id
 LEFT JOIN
-	  -- Finding the highest prices item for each department
-    (SELECT e.dept_id, e.item_name
-    FROM equipment e
+	-- Finding the highest prices item for each department
+    	(SELECT e.dept_id, e.item_name
+    	FROM equipment e
   	INNER JOIN 
-		    (SELECT dept_id, MAX(item_price) AS max_item_price
-		    FROM equipment
-		    GROUP BY dept_id
-		    HAVING MAX(item_price)) AS max 
+		(SELECT dept_id, MAX(item_price) AS max_item_price
+		FROM equipment
+		GROUP BY dept_id
+		HAVING MAX(item_price)) AS max 
 		ON e.dept_id = max.dept_id AND e.item_price = max.max_item_price) AS eMax
 ON e.dept_id = eMax.dept_id
 GROUP BY d.dept_name, eMin.item_name, eMax.item_name
@@ -136,17 +136,4 @@ ORDER BY COUNT(e.item_id) DESC;
 /* Creating a purchase table will allow us to not only see details about inventory
 but also get important statistics that are useful for ordering and managing invetory 
 along with designing marketing tactics. */
-
-
-
-    
-    
-    
-            
-            
-    
-
-	
-
-
 
