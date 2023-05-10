@@ -5,7 +5,7 @@ USE astronauts;
 aircraft flight experience and engineering training in addition to a height below 5 feet 11 inches. The second and third groups chosen included civilians
 with extensive flying experience. By 1964, requirements had changed, and emphasis was placed on academic qualifications; in 1965, six scientist astronauts
 were selected from a group of 400 applicants who had a doctorate or equivalent experience in the natural sciences, medicine, or engineering.
-[Database entries found at bottom] */
+[SOURCE: https://www.kaggle.com/nasa/astronaut-yearbook] */
 
 -- Comparing military/academics along with space flight and walk, sessions and hours, for each group since requirements shifted more towards academics as time passed
 SELECT a.GroupNum AS "Group", COUNT(*) AS "Total Members", COUNT(a.Military_Rank) AS "Military Experience", agrads.academic_astronauts AS "Academic Graduates",
@@ -14,10 +14,10 @@ ROUND(AVG(a.Space_Flight_hr),2) AS "Average Flight Hours /Person", SUM(a.Space_W
 SUM(a.Space_Walks_hr) AS "Total Walk Hours", ROUND(AVG(a.Space_Walks_hr),2) AS "Average Walk Hours /Person"
 FROM astronauts a
 INNER JOIN 
-	  (SELECT agrads.GroupNum, COUNT(*) AS academic_astronauts
+    (SELECT agrads.GroupNum, COUNT(*) AS academic_astronauts
     FROM astronauts agrads
     WHERE (agrads.Graduate_Major LIKE "%Engineer%"
-		      OR agrads.Graduate_Major LIKE "%Aero%"
+	  OR agrads.Graduate_Major LIKE "%Aero%"
           OR agrads.Graduate_Major LIKE "%Astro%"
           OR agrads.Graduate_Major LIKE "%Aviation%"
           OR agrads.Graduate_Major LIKE "%Flight%")
@@ -37,17 +37,17 @@ ORDER BY COUNT(*) DESC;
 
 -- Then finding military and academic information about individuals attending those Alma Maters
 SELECT a.GroupNum, a.Alma_Mater, a.Undergraduate_Major, a.Graduate_Major, 
-	  CASE WHEN a.Military_Rank IS NOT NULL THEN "Yes"
-		ELSE "No"
-	  END AS "Military Experience"
+	CASE WHEN a.Military_Rank IS NOT NULL THEN "Yes"
+	ELSE "No"
+	END AS "Military Experience"
 FROM astronauts a
 INNER JOIN 
-	  (SELECT aalma.Alma_Mater, COUNT(*) AS astronauts_attended
-	  FROM astronauts aalma
-	  GROUP BY aalma.Alma_Mater
-	  HAVING COUNT(*) > 4
-	  ORDER BY COUNT(*) DESC) AS aalma 
-    ON a.Alma_Mater = aalma.Alma_Mater
+	(SELECT aalma.Alma_Mater, COUNT(*) AS astronauts_attended
+	FROM astronauts aalma
+	GROUP BY aalma.Alma_Mater
+	HAVING COUNT(*) > 4
+	ORDER BY COUNT(*) DESC) AS aalma 
+    	ON a.Alma_Mater = aalma.Alma_Mater
 ORDER BY a.GroupNum ASC;
 
 -- Finding the most studied undergraduate majors for the astronauts brought in
@@ -116,5 +116,5 @@ a.Military_Branch AS "Military Branch", a.Space_Flights "Space Flights", a.Space
 a.Space_Walks AS "Space Walks", a.Space_Walks_hr AS "Space Walk Hours"
 FROM astronauts a
 WHERE (ABS(a.Year - RIGHT(a.Birth_Date,4)) IS NOT NULL) AND 
-	    (ABS(a.Year - RIGHT(a.Birth_Date,4)) NOT BETWEEN 26 AND 45)
+      (ABS(a.Year - RIGHT(a.Birth_Date,4)) NOT BETWEEN 26 AND 45)
 ORDER BY a.GroupNum;
