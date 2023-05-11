@@ -1,0 +1,30 @@
+
+-- Creation of Spotify database
+CREATE DATABASE IF NOT EXISTS 2021_Spotify_Top_50;
+USE 2021_Spotify_Top_50;
+
+-- Creation of table to import Spotify data into
+CREATE TABLE spotify_data
+    (id INT PRIMARY KEY AUTO_INCREMENT,
+    artist_name VARCHAR(50) NOT NULL,
+    track_name VARCHAR(50) NOT NULL,
+    track_id VARCHAR(50) NOT NULL,
+    popularity INT NOT NULL,
+    danceability DEC(4,3) NOT NULL,
+    energy DEC(4,3) NOT NULL,
+    key INT NOT NULL,
+    loudness DEC(5,3) NOT NULL,
+    mode INT NOT NULL,
+    speechiness DEC(5,4) NOT NULL,
+    acousticness DEC(6,5) NOT NULL,
+    instrumentalness VARCHAR(50) NOT NULL,
+    liveness DEC(5,4) NOT NULL,
+    valence DEC(4,3) NOT NULL,
+    tempo DEC(6,3) NOT NULL,
+    duration_ms INT NOT NULL,
+    time_signature INT NOT NULL);
+    
+ /* Top 50 most listened songs in the world for year 2021 in Spotify.
+ [SOURCE: https://www.kaggle.com/datasets/equinxx/spotify-top-50-songs-in-2021] */
+ [https://www.kaggle.com/datasets/sveta151/spotify-top-chart-songs-2022]
+ 
