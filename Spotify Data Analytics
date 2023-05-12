@@ -3,13 +3,14 @@
 CREATE DATABASE IF NOT EXISTS 2021_Spotify_Top_50;
 USE 2021_Spotify_Top_50;
 
--- Creation of table to import Spotify data into
+-- Creation of table to import Spotify data into 
 CREATE TABLE spotify_data
     (id INT PRIMARY KEY AUTO_INCREMENT,
-    artist_name VARCHAR(50) NOT NULL,
+    uri VARCHAR(50) NOT NULL,
+    artist_names VARCHAR(50) NOT NULL,
     track_name VARCHAR(50) NOT NULL,
-    track_id VARCHAR(50) NOT NULL,
-    popularity INT NOT NULL,
+    peak_rank INT NOT NULL, 
+    weeks_on_chart INT NOT NULL,
     danceability DEC(4,3) NOT NULL,
     energy DEC(4,3) NOT NULL,
     key INT NOT NULL,
@@ -19,12 +20,63 @@ CREATE TABLE spotify_data
     acousticness DEC(6,5) NOT NULL,
     instrumentalness VARCHAR(50) NOT NULL,
     liveness DEC(5,4) NOT NULL,
-    valence DEC(4,3) NOT NULL,
     tempo DEC(6,3) NOT NULL,
-    duration_ms INT NOT NULL,
-    time_signature INT NOT NULL);
+    time_signature INT NOT NULL,
+    duration_ms INT NOT NULL);
     
- /* Top 50 most listened songs in the world for year 2021 in Spotify.
- [SOURCE: https://www.kaggle.com/datasets/equinxx/spotify-top-50-songs-in-2021] */
- [https://www.kaggle.com/datasets/sveta151/spotify-top-chart-songs-2022]
+/* Top 50 most listened songs in the world for year 2021 in Spotify.
+[SOURCE: https://www.kaggle.com/datasets/sveta151/spotify-top-chart-songs-2022] */
  
+
+/* When looking at the top charts for 2022, my first instinctual question is what makes it a top song. 
+Although we can use sequel to analize this information to get an idea of the answer, this is best seen
+through visualization instead of numbers. For that reason, I wanted to shift my focus for this project
+and instead see the relationship between artists with the most production of top chart tracks and top 
+50 most popular tracks. */
+
+-- Creating temporary table with popularity ranking to refer back to
+/* Popularity was decided based on peak rank and number of weeks on charts */ 
+WITH popularity_ranking AS 
+    (SELECT sd.artist_names, sd.track_name,
+            DENSE_RANK() OVER (ORDER BY sd.peak_rank ASC, sd.weeks_on_chart DESC) AS popularity
+    FROM spotify_data sd), 
+
+-- Creating teporary table of artists with over 5 tracks in the 2022 top charts to refer back to
+multiple_track_artists AS
+    (SELECT sd.artist_names, COUNT(*) AS total_tracks
+    FROM spotify_data sd
+    GROUP BY sd.artist_names
+    HAVING COUNT(*) > 5
+    ORDER BY COUNT(*) DESC)
+
+-- Reading temporary table to see top 50 popular tracks
+SELECT * 
+FROM popularity_ranking
+LIMIT 50; 
+
+-- Reading temporary table to see multiple track artists
+SELECT *
+FROM multiple_track_artists;
+
+-- Comparing how many artists with more than 5 tracks in the 2022 top charts are in the top 50 most popular
+SELECT mta.artist_names AS Artist, COUNT(pr.track_name) AS "Total Tracks in Top 50"
+FROM multiple_track_artists mta
+INNER JOIN popularity_ranking pr ON mta.artist_names = pr.artist_names
+WHERE pr.popularity <= 50
+GROUP BY mta.artist_names
+ORDER BY COUNT(pr.track_name) DESC;
+
+-- Finding popularity ranking of multiple track artists songs NOT in top 50
+SELECT mta.artist_names AS Artist, pr.track_name,
+       CASE WHEN pr.popularity BETWEEN 51 AND 150 THEN "Top 150"
+            WHEN pr.popularity BETWEEN 151 AND 250 THEN "Top 250"
+            WHEN pr.popularity BETWEEN 251 AND 350 THEN "Top 350"
+            ELSE "Lower in the Top Charts"
+       END AS "Popularity Level"
+FROM multiple_track_artists mta
+LEFT JOIN popularity_ranking pr ON mta.artist_names = pr.artist_names
+WHERE pr.popularity > 50
+ORDER BY mta.total_tracks DESC, "Popularity Level";
+
+/* From our analysis, we can see that more than 60% of the multiple track artists produced a song that was in the top 50 most popular tracks.
+   The top 3 most top charts track producing artists ALL had songs that ranked in the top 50 most popular.
