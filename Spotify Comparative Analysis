@@ -113,3 +113,5 @@ WHERE pr.popularity > 100;
 /* From my analysis I can see that the songs in the top 100 most popular songs start with a higher danceability rating. This can lead us to further explore if danceability
 is a big indicator of a popular song, or even a top chart song. Same goes for speechiness. Those in the top 100 most popular never reached a rating of speechiness near 
 as high as those NOT in the top 100, leading us to research futher into the correlation of speechiness and hits/popularity. */
+
+
