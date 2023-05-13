@@ -1,0 +1,115 @@
+
+-- Creation of Spotify database
+CREATE DATABASE IF NOT EXISTS 2021_Spotify_Top_50;
+USE 2021_Spotify_Top_50;
+
+-- Creation of table to import Spotify data into 
+CREATE TABLE spotify_data
+    (id INT PRIMARY KEY AUTO_INCREMENT,
+    uri VARCHAR(50) NOT NULL,
+    artist_names VARCHAR(50) NOT NULL,
+    track_name VARCHAR(50) NOT NULL,
+    peak_rank INT NOT NULL, 
+    weeks_on_chart INT NOT NULL,
+    danceability DEC(4,3) NOT NULL,
+    energy DEC(4,3) NOT NULL,
+    key INT NOT NULL,
+    loudness DEC(5,3) NOT NULL,
+    mode INT NOT NULL,
+    speechiness DEC(5,4) NOT NULL,
+    acousticness DEC(6,5) NOT NULL,
+    instrumentalness VARCHAR(50) NOT NULL,
+    liveness DEC(5,4) NOT NULL,
+    tempo DEC(6,3) NOT NULL,
+    time_signature INT NOT NULL,
+    duration_ms INT NOT NULL);
+    
+/* Top 50 most listened songs in the world for year 2021 in Spotify.
+[SOURCE: https://www.kaggle.com/datasets/sveta151/spotify-top-chart-songs-2022] */
+ 
+
+/* When looking at the top charts for 2022, my first instinctual question is what makes it a top song. 
+Although we can use sequel to analize this information to get an idea of the answer, this is best seen
+through visualization instead of numbers. For that reason, I wanted to shift my focus for this project
+and instead see the relationship between artists with the most production of top chart tracks and top 
+50 most popular tracks. */
+
+-- Creating temporary table with popularity ranking to refer back to
+/* Popularity was decided based on peak rank and number of weeks on charts */ 
+WITH popularity_ranking AS 
+    (SELECT sd.artist_names, sd.track_name,
+            DENSE_RANK() OVER (ORDER BY sd.peak_rank ASC, sd.weeks_on_chart DESC) AS popularity
+    FROM spotify_data sd), 
+
+-- Creating teporary table of artists with over 5 tracks in the 2022 top charts to refer back to
+multiple_track_artists AS
+    (SELECT sd.artist_names, COUNT(*) AS total_tracks
+    FROM spotify_data sd
+    GROUP BY sd.artist_names
+    HAVING COUNT(*) > 5
+    ORDER BY COUNT(*) DESC)
+
+-- Reading temporary table to see top 50 popular tracks
+SELECT * 
+FROM popularity_ranking
+LIMIT 50; 
+
+-- Reading temporary table to see multiple track artists
+SELECT *
+FROM multiple_track_artists;
+
+-- Comparing how many artists with more than 5 tracks in the 2022 top charts are in the top 50 most popular
+SELECT mta.artist_names AS Artist, COUNT(pr.track_name) AS "Total Tracks in Top 50"
+FROM multiple_track_artists mta
+INNER JOIN popularity_ranking pr ON mta.artist_names = pr.artist_names
+WHERE pr.popularity <= 50
+GROUP BY mta.artist_names
+ORDER BY COUNT(pr.track_name) DESC;
+
+-- Finding popularity ranking of multiple track artists songs NOT in top 50
+SELECT mta.artist_names AS Artist, pr.track_name,
+       CASE WHEN pr.popularity BETWEEN 51 AND 150 THEN "Top 150"
+            WHEN pr.popularity BETWEEN 151 AND 250 THEN "Top 250"
+            WHEN pr.popularity BETWEEN 251 AND 350 THEN "Top 350"
+            ELSE "Lower in the Top Charts"
+       END AS "Popularity Level"
+FROM multiple_track_artists mta
+LEFT JOIN popularity_ranking pr ON mta.artist_names = pr.artist_names
+WHERE pr.popularity > 50
+ORDER BY mta.total_tracks DESC, "Popularity Level";
+
+/* From our analysis, we can see that more than 60% of the multiple track artists produced a song that was in the top 50 most
+popular tracks. The top 3 most top charts track producing artists ALL had songs that ranked in the top 50 most popular. */
+
+
+/* Let's compare all top chart songs NOT in the top 50 most popular with those that ARE in the top
+100 most popular to find if there is any correlation to them being higher up in the charts. */
+SELECT "Top 100 Popular Tracks" AS Ranking, ROUND((MIN(sd.danceability))*100,2) AS "Lowest Danceability Score", ROUND((MAX(sd.danceability))*100,2) AS "Highest Danceability Score",
+       ROUND((AVG(sd.danceability))*100,2)  AS "Average Danceability Score", ROUND((MIN(sd.energy))*100,2) AS "Lowest Energy Score", ROUND((MAX(sd.energy))*100,2) AS "Highest Energy Score", 
+       ROUND((AVG(sd.energy))*100,2) AS "Average Energy Score", ROUND((MIN(sd.loudness))*100,2) AS "Lowest Loudness Score", ROUND((MAX(sd.loudness))*100,2) AS "Highest Loudness Score", 
+       ROUND((AVG(sd.loudness))*100,2) AS "Average Loudness Score", ROUND((MIN(sd.speechiness))*100,2) AS "Lowest Speechiness Score", ROUND((MAX(sd.speechiness))*100,2) AS "Highest Speechiness Score", 
+       ROUND((AVG(sd.speechiness))*100,2) AS "Average Speechiness Score", ROUND((MIN(sd.acousticness))*100,2) AS "Lowest Acousticness Score", ROUND((MAX(sd.acousticness))*100,2) AS "Highest Acousticness Score",
+       ROUND((AVG(sd.acousticness))*100,2) AS "Average Acousticness Score", ROUND((MIN(sd.instrumentalness))*100,2) AS "Lowest Instrumentalness Score", ROUND((MAX(sd.instrumentalness))*100,2) AS "Highest Instrumentalness Score",
+       ROUND((AVG(sd.instrumentalness))*100,2) AS "Average Instrumentalness Score", ROUND((MIN(sd.liveness))*100,2) AS "Lowest Liveness Score", ROUND((MAX(sd.liveness))*100,2) AS "Highest Liveness Score",
+       ROUND((AVG(sd.liveness))*100,2) AS "Average Liveness Score", ROUND(MIN(sd.tempo),2) AS "Lowest Tempo Score", ROUND(MAX(sd.tempo),2) AS "highest Tempo Score", ROUND(AVG(sd.tempo),2) AS "Average Tempo Score",
+       ROUND((MIN(sd.duration_ms))/60000,2) AS "Shortest Duration Score", ROUND((MAX(sd.duration_ms))/60000,2) AS "Longest Duration Score",  ROUND((AVG(sd.duration_ms))/60000,2) AS "Average Duration Score"
+FROM spotify_data sd
+INNER JOIN popularity_ranking pr ON sd.track_name = pr.track_name
+WHERE pr.popularity <= 100
+UNION ALL
+SELECT "NOT Top 100 Popular Tracks" AS Ranking, ROUND((MIN(sd.danceability))*100,2) AS "Lowest Danceability Score", ROUND((MAX(sd.danceability))*100,2) AS "Highest Danceability Score",
+       ROUND((AVG(sd.danceability))*100,2)  AS "Average Danceability Score", ROUND((MIN(sd.energy))*100,2) AS "Lowest Energy Score", ROUND((MAX(sd.energy))*100,2) AS "Highest Energy Score", 
+       ROUND((AVG(sd.energy))*100,2) AS "Average Energy Score", ROUND((MIN(sd.loudness))*100,2) AS "Lowest Loudness Score", ROUND((MAX(sd.loudness))*100,2) AS "Highest Loudness Score", 
+       ROUND((AVG(sd.loudness))*100,2) AS "Average Loudness Score", ROUND((MIN(sd.speechiness))*100,2) AS "Lowest Speechiness Score", ROUND((MAX(sd.speechiness))*100,2) AS "Highest Speechiness Score", 
+       ROUND((AVG(sd.speechiness))*100,2) AS "Average Speechiness Score", ROUND((MIN(sd.acousticness))*100,2) AS "Lowest Acousticness Score", ROUND((MAX(sd.acousticness))*100,2) AS "Highest Acousticness Score",
+       ROUND((AVG(sd.acousticness))*100,2) AS "Average Acousticness Score", ROUND((MIN(sd.instrumentalness))*100,2) AS "Lowest Instrumentalness Score", ROUND((MAX(sd.instrumentalness))*100,2) AS "Highest Instrumentalness Score",
+       ROUND((AVG(sd.instrumentalness))*100,2) AS "Average Instrumentalness Score", ROUND((MIN(sd.liveness))*100,2) AS "Lowest Liveness Score", ROUND((MAX(sd.liveness))*100,2) AS "Highest Liveness Score",
+       ROUND((AVG(sd.liveness))*100,2) AS "Average Liveness Score", ROUND(MIN(sd.tempo),2) AS "Lowest Tempo Score", ROUND(MAX(sd.tempo),2) AS "highest Tempo Score", ROUND(AVG(sd.tempo),2) AS "Average Tempo Score",
+       ROUND((MIN(sd.duration_ms))/60000,2) AS "Shortest Duration Score",  ROUND((MAX(sd.duration_ms))/60000,2) AS "Longest Duration Score",  ROUND((AVG(sd.duration_ms))/60000,2) AS "Average Duration Score"
+FROM spotify_data sd
+INNER JOIN popularity_ranking pr ON sd.track_name = pr.track_name
+WHERE pr.popularity > 100;
+
+/* From my analysis I can see that the songs in the top 100 most popular songs start with a higher danceability rating. This can lead us to further explore if danceability
+is a big indicator of a popular song, or even a top chart song. Same goes for speechiness. Those in the top 100 most popular never reached a rating of speechiness near 
+as high as those NOT in the top 100, leading us to research futher into the correlation of speechiness and hits/popularity. */
